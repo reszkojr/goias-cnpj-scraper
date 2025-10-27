@@ -9,4 +9,15 @@ app = FastAPI(
 
 @app.get("/")
 async def read_root():
-    return {"message": "hello world"}
+    """ Endpoint raiz da API para verificação de status """
+    return {"message": "API is running"}
+
+@app.post("/scrape")
+async def create_scrape_task():
+    """ Endpoint para iniciar o processo de scraping """
+    return {"message": "Scraping started"}
+
+@app.get("/results/{task_id}")
+async def get_task_result(task_id: str):
+    """ Endpoint para obter os resultados do scraping """
+    return {"task_id": task_id, "status": "completed", "data": {}}
