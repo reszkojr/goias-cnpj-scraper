@@ -16,7 +16,7 @@ async def read_root():
 @app.post("/scrape")
 async def create_scrape_task():
     """Endpoint para iniciar o processo de scraping"""
-    return {"message": "Scraping started"}
+    return {"message": "Scraping started", "task_id": "123-123-123-123"}
 
 
 @app.get("/results/{task_id}")
