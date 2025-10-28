@@ -16,7 +16,7 @@ def get_redis_connection():
     for _ in range(10):
         try:
             redis_connection = redis.Redis(
-                host=REDIS_HOST, port=3679, db=0, decode_responses=True
+                host=REDIS_HOST, port=6379, db=0, decode_responses=True
             )
             redis_connection.ping()
             print("Conectado ao Redis com sucesso.")
