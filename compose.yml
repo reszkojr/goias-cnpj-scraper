@@ -15,8 +15,6 @@ services:
             context: .
             dockerfile: worker/Dockerfile
         container_name: fast_api_worker
-        volumes:
-            - ./worker:/app
         environment:
             - RABBITMQ_HOST=rabbitmq
             - REDIS_HOST=redis
