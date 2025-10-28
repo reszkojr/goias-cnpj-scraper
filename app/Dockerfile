@@ -2,11 +2,11 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY ./requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip -r requirements.txt
 
-COPY ./app /app/
+COPY . .
 
 EXPOSE 8000
 
