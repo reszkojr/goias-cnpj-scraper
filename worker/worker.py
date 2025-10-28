@@ -22,7 +22,9 @@ def get_redis_connection():
             print("Conectado ao Redis com sucesso.")
             return redis_connection
         except redis.exceptions.ConnectionError:
-            print(f"Falha ao conectar ao Redis, tentando novamente em {retry_interval}")
+            print(
+                f"Falha ao conectar ao Redis, tentando novamente em {retry_interval} segundos..."
+            )
             time.sleep(retry_interval)
         raise Exception("Não foi possível se conectar ao Redis.")
 
@@ -86,6 +88,7 @@ def process_task(task_id, cnpj, redis_client):
 
 
 def main():
+    print("WORKER: Iniciando o worker de processamento de tarefas...")
     redis_client = get_redis_connection()
     rabbit_connection = get_rabbitmq_connection()
 
