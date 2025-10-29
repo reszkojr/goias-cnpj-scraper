@@ -1,18 +1,61 @@
 import json
 import os
+import time
 import uuid
-import pika
-from fastapi import FastAPI, HTTPException
-import redis
 
-from app.models import ScrapeRequest
-from worker.worker import get_rabbitmq_connection, get_redis_connection
+import aio_pika
+from fastapi import FastAPI, HTTPException, status
+from fastapi.concurrency import asynccontextmanager
+from redis import asyncio as aioredis
 
-REDIS_HOST = os.getenv("REDIS_HOST", "redis")
+from app.models import ScrapeRequest, TaskResponse
+
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
+REDIS_HOST = os.getenv("REDIS_HOST", "redis")
 QUEUE_NAME = "scrape_tasks"
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Gerenciador de contexto para inicialização e finalização da API"""
+    try:
+        print("FastAPI - conectando ao RabbitMQ e Redis...")
+        app.state.rabbit_connection = await aio_pika.connect_robust(
+            host=RABBITMQ_HOST, login="user", password="password"
+        )
+        app.state.rabbit_channel = await app.state.rabbit_connection.channel()
+        await app.state.rabbit_channel.declare_queue(QUEUE_NAME, durable=True)
+
+        redis_pool = aioredis.ConnectionPool.from_url(
+            f"redis://{REDIS_HOST}", encoding="utf-8", decode_responses=True
+        )
+        app.state.redis = aioredis.Redis(connection_pool=redis_pool)
+        await app.state.redis.ping()
+        print("FastAPI - conectado")
+    except aioredis.ConnectionError as e:
+        print(f"FastAPI - erro ao conectar ao Redis: {e}")
+        raise
+    except aio_pika.exceptions.AMQPConnectionError as e:
+        print(f"FastAPI - erro ao conectar ao RabbitMQ: {e}")
+        raise
+
+    yield
+
+    try:
+        print("FastAPI - finalizando conexões...")
+        await app.state.rabbit_channel.close()
+        await app.state.rabbit_connection.close()
+        await app.state.redis.close()
+        print("FastAPI - conexões finalizadas")
+    except aio_pika.exceptions.AMQPConnectionError as e:
+        print(f"FastAPI - erro ao finalizar conexões: {e}")
+        raise
+
+    print("FastAPI - encerrado")
+
+
 app = FastAPI(
+    lifespan=lifespan,
     title="API Scraper Sintegra",
     description="Desafio Técnico: FastAPI, RabbitMQ e Redis para scraping",
     version="0.1.0",
@@ -26,37 +69,44 @@ async def read_root():
 
 
 @app.post("/scrape")
-async def create_scrape_task(request: ScrapeRequest):
+async def create_scrape_task(
+    request: ScrapeRequest,
+    response_model=TaskResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+):
     """Endpoint para iniciar o processo de scraping"""
     try:
         task_id = str(uuid.uuid4())
 
-        redis_client = get_redis_connection()
+        redis_client = app.state.redis
+        rabbit_connection = app.state.rabbit_connection
+        channel = await rabbit_connection.channel()
+
         task_data = {
             "task_id": task_id,
             "cnpj": request.cnpj,
             "status": "pending",
-            "created_at": str(uuid.uuid1().time),
+            "created_at": time.time(),
         }
-        redis_client.set(f"task:{task_id}", json.dumps(task_data), ex=3600)
-
-        rabbit_connection = get_rabbitmq_connection()
-        channel = rabbit_connection.channel()
-        channel.queue_declare(queue=QUEUE_NAME, durable=True)
+        await redis_client.set(f"task:{task_id}", json.dumps(task_data), ex=3600)
 
         message = {"task_id": task_id, "cnpj": request.cnpj}
 
-        channel.basic_publish(
-            exchange="",
+        await channel.default_exchange.publish(
+            aio_pika.Message(
+                body=json.dumps(message).encode(),
+                delivery_mode=aio_pika.DeliveryMode.PERSISTENT,
+            ),
             routing_key=QUEUE_NAME,
-            body=json.dumps(message),
-            properties=pika.BasicProperties(delivery_mode=2),
         )
 
-        rabbit_connection.close()
-
-        return {"message": "Webscraping iniciado", "task_id": task_id}
+        return TaskResponse(
+            task_id=task_id,
+            status="pending",
+            message="Tarefa de scraping criada com sucesso",
+        )
     except Exception as e:
+        print(f"FastAPI - Erro ao criar a tarefa de scraping: {e}")
         return HTTPException(
             status_code=500, detail=f"Erro ao criar a tarefa de scraping, {e}"
         )
