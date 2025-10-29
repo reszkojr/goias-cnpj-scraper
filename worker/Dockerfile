@@ -6,6 +6,9 @@ COPY ./requirements.txt .
 
 RUN pip install --no-cache-dir --upgrade pip -r requirements.txt
 
-COPY ./worker/worker.py .
+COPY worker/worker.py .
+
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONIOENCODING=UTF-8
 
 CMD ["python", "worker.py"]
