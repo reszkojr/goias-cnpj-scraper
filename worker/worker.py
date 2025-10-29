@@ -120,7 +120,7 @@ def main():
 
     channel.basic_consume(queue=QUEUE_NAME, on_message_callback=callback)
 
-    print("\nWORKER: [*] Aguardando tarefas. Para sair, pressione CTRL+C")
+    print("\nWORKER - Aguardando tarefas. Para sair, pressione CTRL+C")
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
