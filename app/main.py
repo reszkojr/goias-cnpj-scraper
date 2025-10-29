@@ -18,26 +18,39 @@ QUEUE_NAME = "scrape_tasks"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Gerenciador de contexto para inicialização e finalização da API"""
-    try:
-        print("FastAPI - conectando ao RabbitMQ e Redis...")
-        app.state.rabbit_connection = await aio_pika.connect_robust(
-            host=RABBITMQ_HOST, login="user", password="password"
-        )
-        app.state.rabbit_channel = await app.state.rabbit_connection.channel()
-        await app.state.rabbit_channel.declare_queue(QUEUE_NAME, durable=True)
+    retry_interval = 3
 
-        redis_pool = aioredis.ConnectionPool.from_url(
-            f"redis://{REDIS_HOST}", encoding="utf-8", decode_responses=True
-        )
-        app.state.redis = aioredis.Redis(connection_pool=redis_pool)
-        await app.state.redis.ping()
-        print("FastAPI - conectado")
-    except aioredis.ConnectionError as e:
-        print(f"FastAPI - erro ao conectar ao Redis: {e}")
-        raise
-    except aio_pika.exceptions.AMQPConnectionError as e:
-        print(f"FastAPI - erro ao conectar ao RabbitMQ: {e}")
-        raise
+    for _ in range(10):
+        try:
+            print("FastAPI - conectando ao RabbitMQ... ")
+            app.state.rabbit_connection = await aio_pika.connect_robust(
+                host=RABBITMQ_HOST, login="user", password="password"
+            )
+            app.state.rabbit_channel = await app.state.rabbit_connection.channel()
+            await app.state.rabbit_channel.declare_queue(QUEUE_NAME, durable=True)
+            print("FastAPI - conectado ao RabbitMQ.")
+            break
+        except aio_pika.exceptions.AMQPConnectionError as e:
+            print(
+                f"FastAPI - erro ao conectar ao RabbitMQ: {e}, tentando novamente em {retry_interval}s..."
+            )
+            time.sleep(retry_interval)
+
+    for _ in range(10):
+        try:
+            print("FastAPI - conectando ao Redis...")
+            redis_pool = aioredis.ConnectionPool.from_url(
+                f"redis://{REDIS_HOST}", encoding="utf-8", decode_responses=True
+            )
+            app.state.redis = aioredis.Redis(connection_pool=redis_pool)
+            await app.state.redis.ping()
+            print("FastAPI - conectado ao Redis.")
+            break
+        except aioredis.ConnectionError as e:
+            print(
+                f"FastAPI - erro ao conectar ao Redis: {e}, tentando novamente em {retry_interval}s..."
+            )
+            time.sleep(retry_interval)
 
     yield
 
