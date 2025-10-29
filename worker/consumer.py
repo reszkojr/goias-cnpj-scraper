@@ -4,6 +4,7 @@ import time
 
 import pika
 import redis
+from scraper import perform_scraping
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
@@ -66,25 +67,16 @@ def update_redis(redis_client, task_id, status, result=None):
 
 def process_task(task_id, cnpj, redis_client):
     print(f"WORKER - Tarefa: {task_id} Recebido. Processando CNPJ: {cnpj}...")
-
     update_redis(redis_client, task_id, "processing")
 
-    # TODO: desmockar a seção de scraping
-    print(f"WORKER - Tarefa: {task_id} Simulando scraping... (5 segundos)")
-    time.sleep(5)
+    try:
+        result_data = perform_scraping(cnpj)
 
-    mock_result = {
-        "razao_social": f"EMPRESA FANTASIA QUE NAO EXISTE {cnpj}",
-        "nome_fantasia": "NOME FANTASIA DE UMA EMPRESA QUE NAO EXISTE",
-        "endereco": "RUA DOS BOBOS, 0",
-        "situacao_cadastral": "ATIVA",
-        "timestamp_processamento": time.time(),
-        "storage_driver": "redis",
-    }
-
-    update_redis(redis_client, task_id, "completed", mock_result)
-
-    print(f"WORKER - [Tarefa: {task_id}] Processamento concluído.")
+        update_redis(redis_client, task_id, "completed", result_data)
+        print(f"WORKER - Tarefa: {task_id} - Processamento concluído.")
+    except Exception as e:
+        print(f"WORKER - Tarefa: {task_id} - Falha no processamento: {e}")
+        update_redis(redis_client, task_id, "failed", {"error": str(e)})
 
 
 def main():

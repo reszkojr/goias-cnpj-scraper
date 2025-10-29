@@ -1,4 +1,3 @@
-import json
 import re
 import unicodedata
 
@@ -92,12 +91,3 @@ def perform_scraping(cnpj: str) -> dict:
         raise Exception(f"Erro de rede ao consultar o Sintegra: {e}")
     except Exception as e:
         raise Exception(f"Erro no processamento do scraping: {e}")
-
-
-def main():
-    result = perform_scraping("00006486000175")
-    print(json.dumps(result, ensure_ascii=False, indent=2))
-
-
-if __name__ == "__main__":
-    main()
