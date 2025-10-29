@@ -59,18 +59,18 @@ def update_redis(redis_client, task_id, status, result=None):
             task_data["result"] = result
 
         redis_client.set(task_key, json.dumps(task_data), ex=3600)
-        print(f"WORKER Tarefa: {task_id} Status atualizado para: {status}")
+        print(f"WORKER - Tarefa: {task_id} Status atualizado para: {status}")
     except Exception as e:
-        print(f"WORKER Tarefa: {task_id} ERRO ao atualizar Redis: {e}")
+        print(f"WORKER - Tarefa: {task_id} ERRO ao atualizar Redis: {e}")
 
 
 def process_task(task_id, cnpj, redis_client):
-    print(f"WORKER Tarefa: {task_id} Recebido. Processando CNPJ: {cnpj}...")
+    print(f"WORKER - Tarefa: {task_id} Recebido. Processando CNPJ: {cnpj}...")
 
     update_redis(redis_client, task_id, "processing")
 
     # TODO: desmockar a seção de scraping
-    print(f"WORKER Tarefa: {task_id} Simulando scraping... (5 segundos)")
+    print(f"WORKER - Tarefa: {task_id} Simulando scraping... (5 segundos)")
     time.sleep(5)
 
     mock_result = {
@@ -84,11 +84,11 @@ def process_task(task_id, cnpj, redis_client):
 
     update_redis(redis_client, task_id, "completed", mock_result)
 
-    print(f"WORKER [Tarefa: {task_id}] Processamento concluído.")
+    print(f"WORKER - [Tarefa: {task_id}] Processamento concluído.")
 
 
 def main():
-    print("WORKER: Iniciando o worker de processamento de tarefas...")
+    print("WORKER - Iniciando o worker de processamento de tarefas...")
     redis_client = get_redis_connection()
     rabbit_connection = get_rabbitmq_connection()
 
@@ -102,7 +102,7 @@ def main():
         cnpj = message.get("cnpj")
 
         if not task_id or not cnpj:
-            print(f"WORKER: Mensagem inválida recebida: {body}")
+            print(f"WORKER - Mensagem inválida recebida: {body}")
             ch.basic_nack(delivery_tag=method.delivery_tag, requeue=False)
             return
 
@@ -112,7 +112,7 @@ def main():
             ch.basic_ack(delivery_tag=method.delivery_tag)
 
         except Exception as e:
-            print(f"WORKER Tarefa: {task_id} Falha crítica no processamento: {e}")
+            print(f"WORKER - Tarefa: {task_id} Falha crítica no processamento: {e}")
 
             update_redis(redis_client, task_id, "failed", {"error": str(e)})
 
@@ -124,11 +124,11 @@ def main():
     try:
         channel.start_consuming()
     except KeyboardInterrupt:
-        print("WORKLER: Encerrando...")
+        print("WORKER - Encerrando...")
         channel.stop_consuming()
     finally:
         rabbit_connection.close()
-        print("WORKER: Conexão com RabbitMQ fechada.")
+        print("WORKER - Conexão com RabbitMQ fechada.")
 
 
 if __name__ == "__main__":
