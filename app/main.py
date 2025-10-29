@@ -4,11 +4,11 @@ import time
 import uuid
 
 import aio_pika
-from fastapi import FastAPI, HTTPException, status
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.concurrency import asynccontextmanager
 from redis import asyncio as aioredis
 
-from app.models import ScrapeRequest, TaskResponse
+from app.models import ScrapeRequest, TaskResponse, TaskStatus
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
@@ -62,17 +62,20 @@ app = FastAPI(
 )
 
 
-@app.get("/")
+@app.get("/", summary="Endpoint raiz da API")
 async def read_root():
     """Endpoint raiz da API para verificação de status"""
     return {"message": "API is running"}
 
 
-@app.post("/scrape")
-async def create_scrape_task(
-    request: ScrapeRequest,
+@app.post(
+    "/scrape",
     response_model=TaskResponse,
     status_code=status.HTTP_202_ACCEPTED,
+    summary="Iniciar tarefa de scraping",
+)
+async def create_scrape_task(
+    request: ScrapeRequest,
 ):
     """Endpoint para iniciar o processo de scraping"""
     try:
@@ -112,7 +115,25 @@ async def create_scrape_task(
         )
 
 
-@app.get("/results/{task_id}")
-async def get_task_result(task_id: str):
+@app.get(
+    "/results/{task_id}",
+    response_model=TaskStatus,
+    summary="Obter resultados do scraping",
+)
+async def get_task_result(request: Request, task_id: str):
     """Endpoint para obter os resultados do scraping"""
-    return {"task_id": task_id, "status": "completed", "data": {}}
+    try:
+        redis_client = request.app.state.redis
+
+        task_data_json = await redis_client.get(f"task:{task_id}")
+
+        if not task_data_json:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail="Tarefa não encontrada"
+            )
+
+        task_data = json.loads(task_data_json)
+        return task_data
+    except Exception as e:
+        print(f"FastAPI - Erro no /results/{task_id}: {e}")
+        raise HTTPException(status_code=500, detail=f"Erro ao consultar a tarefa {e}")
