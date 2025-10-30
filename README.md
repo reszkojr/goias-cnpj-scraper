@@ -48,7 +48,7 @@ API REST para consultas assíncronas de CNPJ do estado de Goiás via Sintegra, c
 ## Tecnologias Utilizadas
 
 ### Backend
-- **Python 3.13**
+- **Python 3.11**
 - **FastAPI** - Framework web
 - **BeautifulSoup4** - Parser HTML para extração de dados
 - **Requests** - Cliente HTTP para requisições ao Sintegra
