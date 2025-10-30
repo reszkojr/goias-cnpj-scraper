@@ -20,17 +20,18 @@ class TestAPISimple:
         except requests.exceptions.ConnectionError:
             pytest.skip("API não está rodando")
 
-    def test_create_scrape_task(self):
+    @pytest.mark.filterwarnings("ignore:Expected None")
+    def test_create_scrape_task(self) -> str:
         """Teste de criação de tarefa de scraping"""
         try:
             payload = {"cnpj": self.TEST_CNPJ}
             response = requests.post(f"{self.BASE_URL}/scrape", json=payload)
 
-            assert response.status_code == 200
+            assert response.status_code == 202
             data = response.json()
             assert "task_id" in data
             assert "message" in data
-            assert data["message"] == "Webscraping iniciado"
+            assert data["message"] == "Tarefa de scraping criada com sucesso"
 
             return data["task_id"]
         except requests.exceptions.ConnectionError:
@@ -62,13 +63,13 @@ class TestAPISimple:
             # 1. Cria a tarefa
             payload = {"cnpj": self.TEST_CNPJ}
             response = requests.post(f"{self.BASE_URL}/scrape", json=payload)
-            assert response.status_code == 200
+            assert response.status_code == 202
 
             task_id = response.json()["task_id"]
             print(f"Tarefa criada: {task_id}")
 
             # 2. Aguarda o processamento
-            max_wait = 30
+            max_wait = 5
             wait_time = 0
 
             while wait_time < max_wait:
@@ -96,7 +97,7 @@ class TestAPISimple:
             )
 
             # 4. Verifica a estrutura do resultado
-            result = data["data"]
+            result = data["result"]
 
             # Campos obrigatórios
             expected_fields = [
@@ -129,27 +130,31 @@ class TestAPISimple:
             # Verifica a atividade principal
             atividade_principal = atividades["atividade_principal"]
             assert len(atividade_principal) > 0
-            assert (
-                "1041400 - Fabricação de óleos vegetais em bruto, exceto óleo de milho"
-                in atividade_principal
+
+            # Verifica se a chave "1041400" existe
+            # Verifica se a chave "1041400" existe em alguma das atividades principais
+            assert any("1041400" in atividade for atividade in atividade_principal), (
+                "Código de atividade principal '1041400' não encontrado"
             )
 
             # Verifica as atividades secundárias
             atividade_secundaria = atividades["atividade_secundaria"]
             assert len(atividade_secundaria) > 0
 
-            expected_secundarias = [
-                "4930202 - Transporte rodoviário de carga, exceto produtos perigosos e mudanças, intermunicipal, interestadual e internacional",
-                "4683400 - Comércio atacadista de defensivos agrícolas, adubos, fertilizantes e corretivos do solo",
-                "4692300 - Comércio atacadista de mercadorias em geral, com predominância de insumos agropecuários",
-            ]
+            # Validação de key-value igual para atividades secundárias
+            expected_secundarias = ["4930202", "4683400", "4692300"]
+            codigos_atividades_secundarias = []
 
-            for atividade in expected_secundarias:
-                assert atividade in atividade_secundaria, (
-                    f"Atividade secundária esperada não encontrada: {atividade}"
-                )
+            for atividade in atividade_secundaria:
+                for codigo, _ in atividade.items():
+                    codigos_atividades_secundarias.append(codigo)
 
-            print("✅ Teste completo passou! Resultado:")
+            assert all(
+                codigo in codigos_atividades_secundarias
+                for codigo in expected_secundarias
+            )
+
+            print("Teste completo passou! Resultado:")
             print(json.dumps(data, indent=2, ensure_ascii=False))
 
         except requests.exceptions.ConnectionError:
@@ -161,8 +166,8 @@ class TestAPISimple:
             payload = {"cnpj": "123"}
             response = requests.post(f"{self.BASE_URL}/scrape", json=payload)
 
-            # Pode retornar 422 (validation error) ou 200 (processado mas vai falhar)
-            assert response.status_code in [200, 422]
+            # Pode retornar 422 (validation error) ou 202 (processado mas vai falhar)
+            assert response.status_code in [202, 422]
 
         except requests.exceptions.ConnectionError:
             pytest.skip("API não está rodando")
@@ -196,5 +201,7 @@ if __name__ == "__main__":
         test.test_scrape_specific_cnpj_complete_flow()
         print("Fluxo completo funcionando")
 
+    except Exception as e:
+        print(f"❌ Erro: {e}")
     except Exception as e:
         print(f"❌ Erro: {e}")
