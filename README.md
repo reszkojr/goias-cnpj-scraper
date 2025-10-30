@@ -133,23 +133,43 @@ curl "http://localhost:8000/results/550e8400-e29b-41d4-a716-446655440000"
 **Resposta:**
 ```json
 {
-  "task_id": "550e8400-e29b-41d4-a716-446655440000",
+  "task_id": "8fae8c89-a0a1-4702-bd55-7dd8aa6b080f",
   "status": "completed",
-  "data": {
+  "result": {
     "cnpj": "00.012.377/0001-60",
-    "nome_empresarial": "CEREAL COMERCIO EXPORTACAO E REPRESENTACAO AGROPECUARIA SA",
-    "inscricao_estadual": "10.107.310-0",
-    "situacao_cadastral_vigente": "Ativo - HABILITADO",
     "atividade_economica": {
       "atividade_principal": [
-        "1041400 - Fabricação de óleos vegetais em bruto, exceto óleo de milho"
+        {
+          "1041400": "Fabricação de óleos vegetais em bruto, exceto óleo de milho"
+        }
       ],
       "atividade_secundaria": [
-        "4930202 - Transporte rodoviário de carga...",
-        "4683400 - Comércio atacadista de defensivos..."
+        {
+          "4930202": "Transporte rodoviário de carga, exceto produtos perigosos e mudanças, intermunicipal, interestadual e internacional"
+        },
+        {
+          "4683400": "Comércio atacadista de defensivos agrícolas, adubos, fertilizantes e corretivos do solo"
+        },
+        ...
       ]
-    }
-  }
+    },
+    "inscricao_estadual": "10.107.310-0",
+    "cadastro_atualizado_em": "29/09/2025 16:12:41",
+    "nome_empresarial": "CEREAL COMERCIO EXPORTACAO E REPRESENTACAO AGROPECUARIA SA",
+    "contribuinte": "Sim",
+    "nome_da_propriedade": "FAZ RIO VERDINHO BARRA GRANDE",
+    "endereco_estabelecimento": "RODOVIA BR-060, no SN, KM 381, SETOR INDUSTRIAL - RIO VERDE GO, CEP: 75.905-025",
+    "unidade_auxiliar": "UNIDADE PRODUTIVA",
+    "condicao_de_uso": "",
+    "data_final_de_contrato": "",
+    "regime_de_apuracao": "Normal",
+    "situacao_cadastral_vigente": "Ativo - HABILITADO",
+    "data_desta_situacao_cadastral": "30/01/2009",
+    "data_de_cadastramento": "10/12/1981",
+    "operacoes_com_nfe": "Habilitado",
+    "data_da_consulta": "30/10/2025 11:47:48"
+  },
+  "created_at": 1761835667.7155886
 }
 ```
 
