@@ -75,7 +75,7 @@ def process_task(task_id, cnpj, redis_client):
     try:
         result_data = perform_scraping(cnpj)
 
-        update_redis(redis_client, task_id, "completed", result_data)
+        update_redis(redis_client, task_id, "completed", result_data.model_dump())
         print(f"WORKER - Tarefa: {task_id} - Processamento concluído.")
     except Exception as e:
         print(f"WORKER - Tarefa: {task_id} - Falha no processamento: {e}")
