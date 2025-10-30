@@ -56,6 +56,11 @@ def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[
     """
     Recebe o elemento HTML que contém as Atividades Econômicas
     e extrai as informações dos CNAE's para cada tipo de atividade
+
+    Args:
+        atividadeEconomicaElement: Elemento HTML contendo as Atividades Econômicas
+    Returns:
+        Dicionário com os tipos de atividades como chaves e listas de CNAE's como valores
     """
     labelTexts = atividadeEconomicaElement.find_all("span", class_="label_text")
     atividadesEconomicas = defaultdict(list)
@@ -78,6 +83,10 @@ def parse_results_html(html_content: str) -> dict:
     """
     Recebe o HTML de resposta do Sintegra e extrai os dados
     da tabela, transformando em um dicionário.
+    Args:
+        html_content: HTML retornado pela API do Sintegra
+    Returns:
+        Dicionário bonitinho com os dados extraídos do HTML
     """
     soup = BeautifulSoup(html_content, "html.parser")
     results = {}
@@ -121,7 +130,14 @@ def parse_results_html(html_content: str) -> dict:
 
 
 def perform_scraping(cnpj: str) -> dict:
-    """Função que faz o scraping no site do Sintegra-GO."""
+    """
+    Função que faz o scraping no site do Sintegra-GO.
+
+    Args:
+        cnpj: CNPJ a ser consultado
+    Returns:
+        Dicionário bonitinho com os dados extraídos do site
+    """
     clean_cnpj = "".join(filter(str.isdigit, cnpj))
     formatted_cnpj = f"{clean_cnpj[:2]}.{clean_cnpj[2:5]}.{clean_cnpj[5:8]}/{clean_cnpj[8:12]}-{clean_cnpj[12:14]}"
 
