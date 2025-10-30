@@ -5,6 +5,52 @@ from collections import defaultdict
 import requests
 from bs4 import BeautifulSoup, Tag
 
+NORMALIZE_KEY_EXCEPTIONS = {
+    "operacoes com nf-e": "operacoes_com_nfe",
+}
+
+
+def normalize_key(text: str) -> str:
+    """
+    Normaliza uma string para ser usada como chave de dicionário.
+
+    Args:
+        text: Texto a ser normalizado
+
+    Returns:
+        String normalizada em snake_case, sem acentos e caracteres especiais
+    """
+
+    if not text:
+        return ""
+
+    # Converter para lowercase e remover dois pontos
+    key = text.lower().replace(":", "").strip()
+
+    # Normalizar acentos (NFD - Normalization Form Decomposed)
+    key = unicodedata.normalize("NFKD", key)
+
+    # Remover caracteres de combinação (acentos)
+    key = "".join(ch for ch in key if not unicodedata.combining(ch))
+
+    # Checar se a chave se encaixa em alguma das exceções
+    if key in NORMALIZE_KEY_EXCEPTIONS:
+        return NORMALIZE_KEY_EXCEPTIONS[key]
+
+    # Substituir caracteres especiais por underscore
+    key = re.sub(r"[^a-z0-9_\-]", "_", key)
+
+    # Converter hífens para underscores
+    key = key.replace("-", "_")
+
+    # Substituir múltiplos underscores consecutivos por um único underscore
+    key = re.sub(r"_+", "_", key)
+
+    # Remover underscores do início e fim
+    key = key.strip("_")
+
+    return key
+
 
 def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[str]]:
     """
@@ -19,12 +65,7 @@ def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[
         stylesElemento = element.get_attribute_list("style")
 
         if len(stylesElemento) == 0:
-            tipo_atividade = conteudoElemento.lower()
-            tipo_atividade = unicodedata.normalize("NFKD", tipo_atividade)
-            tipo_atividade = "".join(
-                ch for ch in tipo_atividade if not unicodedata.combining(ch)
-            )
-            tipo_atividade = re.sub(r"[^a-z0-9_]", "_", tipo_atividade.replace("-", ""))
+            tipo_atividade = normalize_key(conteudoElemento)
             continue
 
         cnae = conteudoElemento
@@ -52,23 +93,14 @@ def parse_results_html(html_content: str) -> dict:
 
         if titulo_tag.attrs.get("class") == ["box_title"]:
             atividades_economicas = parse_atividade_economica(item)
-            key = titulo_tag.get_text(strip=True).lower()
-            key = unicodedata.normalize("NFKD", key)
-            key = "".join(ch for ch in key if not unicodedata.combining(ch))
-            key = re.sub(r"[^a-z0-9_]", "_", key.replace("-", ""))
+            key = normalize_key(titulo_tag.get_text(strip=True))
             results[key] = atividades_economicas
             continue
         else:
             valor_tag = item.find("span", class_="label_text")
 
         if titulo_tag and valor_tag:
-            key = titulo_tag.get_text(strip=True).replace(":", "").strip().lower()
-
-            key = unicodedata.normalize("NFKD", key)
-            key = "".join(ch for ch in key if not unicodedata.combining(ch))
-
-            key = re.sub(r"[^a-z0-9_]", "_", key.replace("-", ""))
-            key = re.sub(r"_+", "_", key).strip("_")
+            key = normalize_key(titulo_tag.get_text(strip=True))
 
             value = valor_tag.get_text(strip=True)
             value = unicodedata.normalize("NFKD", value)
