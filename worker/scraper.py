@@ -4,8 +4,7 @@ from collections import defaultdict
 
 import requests
 from bs4 import BeautifulSoup, Tag
-
-from worker.models import AtividadeEconomica, ScrapedCNPJ
+from models import AtividadeEconomica, ScrapedCNPJ
 
 NORMALIZE_KEY_EXCEPTIONS = {
     "operacoes com nf-e": "operacoes_com_nfe",
