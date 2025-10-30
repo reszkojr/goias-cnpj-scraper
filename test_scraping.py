@@ -135,35 +135,3 @@ def test_scraped_cnpj_invalid():
 
     with pytest.raises(ValidationError):
         ScrapedCNPJ.model_validate(data)
-
-
-if __name__ == "__main__":
-    import sys
-
-    test = TestScrapingEssentials()
-
-    print("Testando funções de scraping...")
-
-    try:
-        print("1. Testando normalize_key...")
-        test.test_normalize_key()
-        print("normalize_key funcionando\n")
-
-        print("2. Testando parse_results_html...")
-        test.test_parse_results_html_success()
-        test.test_parse_results_html_error()
-        print("parse_results_html funcionando\n")
-
-        print("3. Testando perform_scraping (mock)...")
-        test.test_perform_scraping_success()
-        print("perform_scraping (mock) funcionando\n")
-
-        print("\nTestando scraping real...")
-        real_test = TestScrapingReal()
-        real_test.test_real_scraping_cnpj_specific()
-
-        print("\nTodos os testes essenciais passaram!")
-
-    except Exception as e:
-        print(f"Erro: {e}")
-        sys.exit(1)

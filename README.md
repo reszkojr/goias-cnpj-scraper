@@ -187,7 +187,6 @@ goias-cnpj-scraper/
 │   └── scraper.py              - Lógica de web scraping e parsing dos dados do Sintegra
 ├── test_scraping.py            - Testes do módulo de scraping (parsing, extração de campos)
 ├── test_api_simple.py          - Testes básicos da API (endpoints principais e respostas)
-├── run_tests.sh                - Script para executar a suíte de testes localmente
 ├── requirements.txt            - Dependências de runtime do projeto
 ├── requirements-test.txt       - Dependências adicionais necessárias apenas para testes
 ├── sintegra-scraper-api.bruno_collection.json   - Collection do Bruno (coleção de requisições para import)
@@ -208,7 +207,7 @@ pip install -r requirements-test.txt
 
 **Executar todos os testes:**
 ```bash
-./run_tests.sh
+pytest tests/
 ```
 
 **Executar testes específicos:**

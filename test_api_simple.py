@@ -181,27 +181,3 @@ class TestAPISimple:
 
         except requests.exceptions.ConnectionError:
             pytest.skip("API não está rodando")
-
-
-if __name__ == "__main__":
-    test = TestAPISimple()
-
-    print("🚀 Testando API...")
-
-    try:
-        print("1. Testando health da api...")
-        test.test_api_health()
-        print("API está funcionando")
-
-        print("2. Testando criação de tarefa...")
-        task_id = test.test_create_scrape_task()
-        print(f"Tarefa criada: {task_id}")
-
-        print("3. Testando fluxo completo...")
-        test.test_scrape_specific_cnpj_complete_flow()
-        print("Fluxo completo funcionando")
-
-    except Exception as e:
-        print(f"❌ Erro: {e}")
-    except Exception as e:
-        print(f"❌ Erro: {e}")
