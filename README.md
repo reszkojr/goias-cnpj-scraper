@@ -27,8 +27,11 @@ API REST para consultas assíncronas de CNPJ do estado de Goiás via Sintegra, c
 ### API Endpoints
 
 **GET /** - Verificação de status da API
+
 **POST /scrape** - Criação de nova tarefa de scraping
+
 **GET /results/{task_id}** - Consulta de resultado de tarefa
+
 **GET /docs** - Documentação Swagger da API em OpenAPI
 
 ### Dados Extraídos
