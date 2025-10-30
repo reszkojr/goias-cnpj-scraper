@@ -1,0 +1,112 @@
+{
+  "name": "Sintegra Scraper API",
+  "version": "1",
+  "items": [
+    {
+      "type": "http",
+      "name": "Resultado de Task",
+      "filename": "Resultado de Task.bru",
+      "seq": 2,
+      "settings": {
+        "encodeUrl": true,
+        "timeout": 0
+      },
+      "tags": [],
+      "request": {
+        "url": "{{API_URL}}/results/{{task_id}}",
+        "method": "GET",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "none",
+          "formUrlEncoded": [],
+          "multipartForm": [],
+          "file": []
+        },
+        "script": {},
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "docs": "",
+        "auth": {
+          "mode": "inherit"
+        }
+      }
+    },
+    {
+      "type": "http",
+      "name": "Webscrapear CNPJ",
+      "filename": "Webscrapear CNPJ.bru",
+      "seq": 1,
+      "settings": {
+        "encodeUrl": true,
+        "timeout": 0
+      },
+      "tags": [],
+      "request": {
+        "url": "{{API_URL}}/scrape",
+        "method": "POST",
+        "headers": [],
+        "params": [],
+        "body": {
+          "mode": "json",
+          "json": "{\n  \"cnpj\": \"123\"\n}",
+          "formUrlEncoded": [],
+          "multipartForm": [],
+          "file": []
+        },
+        "script": {
+          "res": "const jsonData = res.getBody();\nbru.setEnvVar('task_id', jsonData.task_id);\n"
+        },
+        "vars": {},
+        "assertions": [],
+        "tests": "",
+        "docs": "",
+        "auth": {
+          "mode": "inherit"
+        }
+      }
+    }
+  ],
+  "activeEnvironmentUid": "TxjTt5xXjivgCkAyuZ3zt",
+  "environments": [
+    {
+      "variables": [
+        {
+          "name": "API_URL",
+          "value": "http://localhost:8000",
+          "enabled": true,
+          "secret": false,
+          "type": "text"
+        },
+        {
+          "name": "task_id",
+          "value": "f7c08202-b805-40b7-851f-ebf8ef7f9bf8",
+          "secret": false,
+          "enabled": true,
+          "type": "text"
+        }
+      ],
+      "name": ".env"
+    }
+  ],
+  "root": {
+    "request": {
+      "auth": {
+        "mode": "none"
+      }
+    },
+    "meta": {
+      "name": "Sintegra Scraper API"
+    }
+  },
+  "brunoConfig": {
+    "version": "1",
+    "name": "Sintegra Scraper API",
+    "type": "collection",
+    "ignore": [
+      "node_modules",
+      ".git"
+    ]
+  }
+}

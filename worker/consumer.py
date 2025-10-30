@@ -4,6 +4,7 @@ import time
 
 import pika
 import redis
+from scraper import perform_scraping
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
@@ -11,6 +12,7 @@ QUEUE_NAME = "scrape_tasks"
 
 
 def get_redis_connection():
+    """Estabelece a conexão com o servidor Redis com tentativas de reconexão"""
     print("Tentando se conectar ao servidor do Redis...")
     retry_interval = 3
     for _ in range(10):
@@ -26,10 +28,11 @@ def get_redis_connection():
                 f"Falha ao conectar ao Redis, tentando novamente em {retry_interval} segundos..."
             )
             time.sleep(retry_interval)
-        raise Exception("Não foi possível se conectar ao Redis.")
+    raise Exception("Não foi possível se conectar ao Redis.")
 
 
 def get_rabbitmq_connection():
+    """Estabelece a conexão com o servidor RabbitMQ com tentativas de reconexão"""
     print("Tentando se conectar ao servidor do RabbitMQ...")
     credentials = pika.PlainCredentials("user", "password")
     parameters = pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials)
@@ -48,7 +51,7 @@ def get_rabbitmq_connection():
 
 
 def update_redis(redis_client, task_id, status, result=None):
-    """Atualiza o status da tarefa no Redis."""
+    """Atualiza o status da tarefa no Redis"""
     try:
         task_key = f"task:{task_id}"
         task_data_json = redis_client.get(task_key)
@@ -65,26 +68,18 @@ def update_redis(redis_client, task_id, status, result=None):
 
 
 def process_task(task_id, cnpj, redis_client):
+    """Processa a tarefa de scraping para o CNPJ fornecido"""
     print(f"WORKER - Tarefa: {task_id} Recebido. Processando CNPJ: {cnpj}...")
-
     update_redis(redis_client, task_id, "processing")
 
-    # TODO: desmockar a seção de scraping
-    print(f"WORKER - Tarefa: {task_id} Simulando scraping... (5 segundos)")
-    time.sleep(5)
+    try:
+        result_data = perform_scraping(cnpj)
 
-    mock_result = {
-        "razao_social": f"EMPRESA FANTASIA QUE NAO EXISTE {cnpj}",
-        "nome_fantasia": "NOME FANTASIA DE UMA EMPRESA QUE NAO EXISTE",
-        "endereco": "RUA DOS BOBOS, 0",
-        "situacao_cadastral": "ATIVA",
-        "timestamp_processamento": time.time(),
-        "storage_driver": "redis",
-    }
-
-    update_redis(redis_client, task_id, "completed", mock_result)
-
-    print(f"WORKER - [Tarefa: {task_id}] Processamento concluído.")
+        update_redis(redis_client, task_id, "completed", result_data)
+        print(f"WORKER - Tarefa: {task_id} - Processamento concluído.")
+    except Exception as e:
+        print(f"WORKER - Tarefa: {task_id} - Falha no processamento: {e}")
+        update_redis(redis_client, task_id, "failed", {"error": str(e)})
 
 
 def main():
@@ -110,7 +105,6 @@ def main():
             process_task(task_id, cnpj, redis_client)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
-
         except Exception as e:
             print(f"WORKER - Tarefa: {task_id} Falha crítica no processamento: {e}")
 
