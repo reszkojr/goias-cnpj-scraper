@@ -1,7 +1,9 @@
 from unittest.mock import Mock, patch
 
 import pytest
+from pydantic_core import ValidationError
 
+from worker.models import ScrapedCNPJ
 from worker.scraper import normalize_key, parse_results_html, perform_scraping
 
 
@@ -102,6 +104,37 @@ class TestScrapingReal:
 
         except Exception as e:
             pytest.skip(f"Scraping falhou: {e}")
+
+    def test_scraped_cnpj_valid(self):
+        """Teste de validação da model ScrapedCNPJ"""
+        data = {
+            "cnpj": "12345678000199",
+            "atividade_economica": {
+                "atividade_principal": [{"1234": "Comércio varejista"}],
+                "atividade_secundaria": [],
+            },
+            "nome_empresarial": "Empresa Teste Ltda",
+            "contribuinte": "Sim",
+            "situacao_cadastral_vigente": "Ativo",
+        }
+        obj = ScrapedCNPJ.model_validate(data)
+        assert obj.cnpj == "12345678000199"
+        assert (
+            obj.atividade_economica.atividade_principal[0]["1234"]
+            == "Comércio varejista"
+        )
+        assert obj.situacao_cadastral_vigente == "Ativo"
+
+
+def test_scraped_cnpj_invalid():
+    data = {
+        # falta o campo obrigatorio 'cnpj'
+        "atividade_economica": {"atividade_principal": [], "atividade_secundaria": []}
+    }
+    import pytest
+
+    with pytest.raises(ValidationError):
+        ScrapedCNPJ.model_validate(data)
 
 
 if __name__ == "__main__":
