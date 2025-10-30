@@ -80,8 +80,6 @@ def perform_scraping(cnpj: str) -> dict:
         print(f"SCRAPER - (CNPJ: {clean_cnpj}) Resposta recebida. Parseando HTML...")
 
         data = parse_results_html(response.text)
-        data["cnpj_consultado"] = clean_cnpj
-        data["cnpj_formatado"] = formatted_cnpj
 
         return data
 
