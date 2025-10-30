@@ -104,7 +104,11 @@ RABBITMQ_DEFAULT_PASS=password
 
 Existem três maneiras de consumir a API. Uma é utilizando o `curl`, outra com o Postman, e outra com o Bruno (meu preferido).
 
-Caso você queira consumi-la utilizando o Bruno ou o Postman, ambas as collections estão presentes para importação na raiz do projeto. Caso opte por utilizar o `curl`, continue lendo.
+Caso você queira consumi-la utilizando o Bruno ou o Postman, ambas as collections estão presentes para importação na raiz do projeto. 
+
+**Importante**: Para usar as collections do Postman ou Bruno, você precisa criar um **environment** com uma variável chamada `API_URL` que deve conter a URL da API, por exemplo: `http://localhost:8000`
+
+Caso opte por utilizar o `curl`, continue lendo.
 
 ### Exemplo de Consulta
 
