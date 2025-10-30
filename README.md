@@ -91,7 +91,7 @@ curl http://localhost:8000/
 
 ### Configuração de Ambiente
 
-O sistema utiliza as seguintes variáveis de ambiente:
+O sistema utiliza as seguintes variáveis de ambiente (disponíveis no `.env.example`):
 
 ```bash
 RABBITMQ_HOST=rabbitmq
@@ -175,25 +175,29 @@ curl "http://localhost:8000/results/550e8400-e29b-41d4-a716-446655440000"
 
 ## Estrutura do Projeto
 
-```
-goias-cnpj-scraper/
-├── app
-│   ├── Dockerfile              - Instruções para construir a imagem da API (ambiente de runtime)
-│   ├── main.py                 - API FastAPI: endpoints, roteamento e inicialização do servidor
-│   └── models.py               - Schemas Pydantic e modelos usados para validação/serialização
-├── worker
-│   ├── consumer.py             - Consumidor RabbitMQ: recebe task_ids e aciona o scraping
-│   ├── Dockerfile              - Instruções para construir a imagem do worker
-│   └── scraper.py              - Lógica de web scraping e parsing dos dados do Sintegra
-├── test_scraping.py            - Testes do módulo de scraping (parsing, extração de campos)
-├── test_api_simple.py          - Testes básicos da API (endpoints principais e respostas)
-├── requirements.txt            - Dependências de runtime do projeto
-├── requirements-test.txt       - Dependências adicionais necessárias apenas para testes
-├── sintegra-scraper-api.bruno_collection.json   - Collection do Bruno (coleção de requisições para import)
-├── sintegra-scraper-api.postman_collection.json - Collection do Postman para teste manual da API
-├── compose.yml                 - Definição dos serviços Docker (API, worker, rabbitmq, redis)
-├── pyproject.toml              - Configuração de ferramentas Python (build, lint, formatação)
-└── pytest.ini                  - Configurações e opções do pytest
+```bash
+../goias-cnpj-scraper
+├── app  
+│   ├── Dockerfile                # Imagem Docker para o serviço da API
+│   ├── main.py                   # Código da API em FastAPI
+│   └── models.py                 # Modelos da API 
+├── worker  
+│   ├── Dockerfile                # Imagem Docker para o worker de scraping 
+│   ├── consumer.py               # Consumer/worker de tarefas do RabbitMQ 
+│   ├── models.py                 # Modelos do worker 
+│   └── scraper.py                # Lógica de scraping do Sintegra 
+├── tests  
+│   ├── test_api_simple.py        # Testes dos endpoints da API 
+│   └── test_scraping.py          # Testes das funcionalidades de scraping 
+├── README.md                     # Documentação do projeto
+├── compose.yml                   # Docker compose dos serviços
+├── pyproject.toml                # Configuração do projeto Python
+├── pytest.ini                    # Configuração do Pytest 
+├── requirements-test.txt         # Dependências para testes 
+├── requirements.txt              # Dependências principais do projeto 
+├── sintegra-scraper-api.bruno_collection.json   # Collection para testes no Bruno API Client 
+└── sintegra-scraper-api.postman_collection.json # Collection para testes no Postman 
+
 ```
 
 ## Testes Automatizados
@@ -205,24 +209,15 @@ goias-cnpj-scraper/
 pip install -r requirements-test.txt
 ```
 
-**Executar todos os testes:**
+**Executar testes:**
 ```bash
-pytest tests/
-```
-
-**Executar testes específicos:**
-```bash
-python test_api_simple.py    # Testes da API
-python test_scraping.py      # Testes de scraping
-pytest -v                    # Usar pytest
+pytest -v tests/
 ```
 
 ### Cobertura de Testes
 
-- **Testes de API**: verificação completa dos endpoints e fluxo de dados
+- **Testes de API**: verificação dos endpoints e fluxo de dados
 - **Testes de Scraping**: validação das funções de extração e parsing
-- **Testes de Integração**: validação com CNPJ real do Sintegra
-- **Testes de Mock**: simulação de cenários de erro e sucesso
 
 ## Monitoramento e Logs
 
@@ -232,20 +227,7 @@ pytest -v                    # Usar pytest
 docker-compose logs -f
 ```
 
-### Interface de Administração
-
-**RabbitMQ Management**: http://localhost:15672
-- Usuário: user
-- Senha: password
-
 ## Tratamento de Erros
-
-### Tipos de Erro
-
-- **CNPJ Inválido**: Retorna erro do próprio Sintegra
-- **Timeout de Requisição**: Falha após 30 segundos
-- **Erro de Parsing**: Falha na extração de dados do HTML
-- **Indisponibilidade do Sintegra**: Retry automático não implementado
 
 ### Status de Tarefas
 
@@ -258,11 +240,11 @@ docker-compose logs -f
 
 ### Padrões Seguidos
 
-- **PEP8**: Estilo de código Python padrão
-- **Type Hints**: Tipagem estática para melhor documentação
-- **Docstrings**: Documentação de funções e classes
-- **Separação de Responsabilidades**: Módulos especializados
-- **Tratamento de Exceções**: Captura e logging adequados
+- **PEP8**: estilo de código Python padrão
+- **Type Hints**: tipagem estática para melhor documentação
+- **Docstrings**: documentação de funções e classes
+- **Separação de Responsabilidades**: módulos especializados
+- **Tratamento de Exceções**: captura e logging adequados
 
 ### Ferramentas de Qualidade
 
