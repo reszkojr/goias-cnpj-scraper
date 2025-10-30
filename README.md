@@ -84,7 +84,7 @@ cd goias-cnpj-scraper
 docker-compose up --build
 ```
 
-**Para melhor performance, é possível escalar o número de workers:**
+> Para melhor performance, é possível escalar o número de workers:
 ```bash
 docker-compose up --build --scale worker=3
 ```
