@@ -12,6 +12,7 @@ QUEUE_NAME = "scrape_tasks"
 
 
 def get_redis_connection():
+    """Estabelece a conexão com o servidor Redis com tentativas de reconexão"""
     print("Tentando se conectar ao servidor do Redis...")
     retry_interval = 3
     for _ in range(10):
@@ -31,6 +32,7 @@ def get_redis_connection():
 
 
 def get_rabbitmq_connection():
+    """Estabelece a conexão com o servidor RabbitMQ com tentativas de reconexão"""
     print("Tentando se conectar ao servidor do RabbitMQ...")
     credentials = pika.PlainCredentials("user", "password")
     parameters = pika.ConnectionParameters(host=RABBITMQ_HOST, credentials=credentials)
@@ -49,7 +51,7 @@ def get_rabbitmq_connection():
 
 
 def update_redis(redis_client, task_id, status, result=None):
-    """Atualiza o status da tarefa no Redis."""
+    """Atualiza o status da tarefa no Redis"""
     try:
         task_key = f"task:{task_id}"
         task_data_json = redis_client.get(task_key)
@@ -66,6 +68,7 @@ def update_redis(redis_client, task_id, status, result=None):
 
 
 def process_task(task_id, cnpj, redis_client):
+    """Processa a tarefa de scraping para o CNPJ fornecido"""
     print(f"WORKER - Tarefa: {task_id} Recebido. Processando CNPJ: {cnpj}...")
     update_redis(redis_client, task_id, "processing")
 
@@ -102,7 +105,6 @@ def main():
             process_task(task_id, cnpj, redis_client)
 
             ch.basic_ack(delivery_tag=method.delivery_tag)
-
         except Exception as e:
             print(f"WORKER - Tarefa: {task_id} Falha crítica no processamento: {e}")
 
