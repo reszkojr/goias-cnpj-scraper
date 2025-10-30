@@ -5,6 +5,8 @@ from collections import defaultdict
 import requests
 from bs4 import BeautifulSoup, Tag
 
+from worker.models import AtividadeEconomica, ScrapedCNPJ
+
 NORMALIZE_KEY_EXCEPTIONS = {
     "operacoes com nf-e": "operacoes_com_nfe",
 }
@@ -52,7 +54,9 @@ def normalize_key(text: str) -> str:
     return key
 
 
-def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[str]]:
+def parse_atividade_economica(
+    atividadeEconomicaElement: Tag,
+) -> AtividadeEconomica:
     """
     Recebe o elemento HTML que contém as Atividades Econômicas
     e extrai as informações dos CNAE's para cada tipo de atividade
@@ -69,17 +73,18 @@ def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[
         conteudoElemento = element.get_text(strip=True)
         stylesElemento = element.get_attribute_list("style")
 
-        if len(stylesElemento) == 0:
+        if len(stylesElemento) == 0 or stylesElemento[0] is None:
             tipo_atividade = normalize_key(conteudoElemento)
             continue
 
         cnae = conteudoElemento
-        atividadesEconomicas[tipo_atividade].append(cnae)
+        codigo_cnae, descricao_cane = map(str.strip, cnae.split(" - ", 1))
+        atividadesEconomicas[tipo_atividade].append({codigo_cnae: descricao_cane})
 
-    return atividadesEconomicas
+    return AtividadeEconomica.model_validate(atividadesEconomicas)
 
 
-def parse_results_html(html_content: str) -> dict:
+def parse_results_html(html_content: str) -> ScrapedCNPJ:
     """
     Recebe o HTML de resposta do Sintegra e extrai os dados
     da tabela, transformando em um dicionário.
@@ -90,6 +95,15 @@ def parse_results_html(html_content: str) -> dict:
     """
     soup = BeautifulSoup(html_content, "html.parser")
     results = {}
+
+    if "Não foi encontrado nenhum contribuinte" in html_content:
+        return ScrapedCNPJ(
+            cnpj="",
+            atividade_economica=AtividadeEconomica(
+                atividade_principal=[], atividade_secundaria=[]
+            ),
+            situacao_cadastral_vigente="Não encontrado",
+        )
 
     items = soup.select("div.item, div.col.box")
 
@@ -126,10 +140,10 @@ def parse_results_html(html_content: str) -> dict:
             raise Exception(f"Erro retornado pelo Sintegra: {error_msg}")
         raise Exception("Não foi possível parsear o HTML de resultado.")
 
-    return results
+    return ScrapedCNPJ.model_validate(results)
 
 
-def perform_scraping(cnpj: str) -> dict:
+def perform_scraping(cnpj: str) -> ScrapedCNPJ:
     """
     Função que faz o scraping no site do Sintegra-GO.
 

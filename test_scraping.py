@@ -19,35 +19,42 @@ class TestScrapingEssentials:
         html = """
         <html>
             <body>
-                <div class="item">
-                    <span class="label_title">CNPJ:</span>
-                    <span class="label_text">00.012.377/0001-60</span>
-                </div>
-                <div class="item">
-                    <span class="label_title">Nome Empresarial:</span>
-                    <span class="label_text">CEREAL COMERCIO EXPORTACAO</span>
-                </div>
+            <div class="item">
+                <span class="label_title">CNPJ:</span>
+                <span class="label_text">00.012.377/0001-60</span>
+            </div>
+            <div class="item">
+                <span class="label_title">Nome Empresarial:</span>
+                <span class="label_text">CEREAL COMERCIO EXPORTACAO</span>
+            </div>
+            <div class="col box">
+                <div class="box_title">Atividade Econômica</div>
+                <span class="label_text">Atividade Principal</span>
+                <span class="label_text" style="font-weight: normal;">
+                4741500 - Comércio varejista de tintas e materiais para pintura
+                </span>
+            </div>
             </body>
         </html>
         """
 
-        result = parse_results_html(html)
-        assert result["cnpj"] == "00.012.377/0001-60"
-        assert result["nome_empresarial"] == "CEREAL COMERCIO EXPORTACAO"
+        scraped_cnpj = parse_results_html(html)
+        assert scraped_cnpj.cnpj == "00.012.377/0001-60"
+        assert scraped_cnpj.nome_empresarial == "CEREAL COMERCIO EXPORTACAO"
 
     def test_parse_results_html_error(self):
         """Teste de erro do Sintegra"""
         html = """
         <html>
             <body>
-                <td class="aviso">CNPJ não encontrado</td>
+                <td class="aviso">Não foi encontrado nenhum contribuinte</td>
             </body>
         </html>
         """
 
-        with pytest.raises(Exception) as exc_info:
-            parse_results_html(html)
-        assert "Erro retornado pelo Sintegra" in str(exc_info.value)
+        parse_results_html(html)
+        scraped_cnpj = parse_results_html(html)
+        assert scraped_cnpj.situacao_cadastral_vigente == "Não encontrado"
 
     @patch("worker.scraper.requests.post")
     def test_perform_scraping_success(self, mock_post):
@@ -58,12 +65,19 @@ class TestScrapingEssentials:
             <span class="label_title">CNPJ:</span>
             <span class="label_text">00.012.377/0001-60</span>
         </div>
+        <div class="col box">
+            <div class="box_title">Atividade Econômica</div>
+            <span class="label_text">Atividade Principal</span>
+            <span class="label_text" style="font-weight: normal;">
+            4741500 - Comércio varejista de tintas e materiais para pintura
+            </span>
+        </div>
         """
         mock_response.raise_for_status.return_value = None
         mock_post.return_value = mock_response
 
-        result = perform_scraping("00012377000160")
-        assert result["cnpj"] == "00.012.377/0001-60"
+        scraped_cnpj = perform_scraping("00012377000160")
+        assert scraped_cnpj.cnpj == "00.012.377/0001-60"
 
         # Verifica se chamou a URL correta
         call_args = mock_post.call_args
@@ -78,11 +92,11 @@ class TestScrapingReal:
         cnpj = "00012377000160"
 
         try:
-            result = perform_scraping(cnpj)
+            scraped_cnpj = perform_scraping(cnpj)
 
             # Verifica os campos principais
-            assert result["cnpj"] == "00.012.377/0001-60"
-            assert "CEREAL" in result["nome_empresarial"]
+            assert scraped_cnpj.cnpj == "00.012.377/0001-60"
+            assert "CEREAL" in scraped_cnpj.nome_empresarial
 
             print("Scraping real funcionando\n")
 
