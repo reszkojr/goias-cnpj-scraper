@@ -4,7 +4,7 @@ import time
 
 import pika
 import redis
-from scraper import perform_scraping
+from worker.scraper import perform_scraping
 
 RABBITMQ_HOST = os.getenv("RABBITMQ_HOST", "rabbitmq")
 REDIS_HOST = os.getenv("REDIS_HOST", "redis")
