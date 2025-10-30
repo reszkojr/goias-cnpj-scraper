@@ -1,8 +1,36 @@
 import re
 import unicodedata
+from collections import defaultdict
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
+
+
+def parse_atividade_economica(atividadeEconomicaElement: Tag) -> dict[str, list[str]]:
+    """
+    Recebe o elemento HTML que contém as Atividades Econômicas
+    e extrai as informações dos CNAE's para cada tipo de atividade
+    """
+    labelTexts = atividadeEconomicaElement.find_all("span", class_="label_text")
+    atividadesEconomicas = defaultdict(list)
+    tipo_atividade = None
+    for element in labelTexts:
+        conteudoElemento = element.get_text(strip=True)
+        stylesElemento = element.get_attribute_list("style")
+
+        if len(stylesElemento) == 0:
+            tipo_atividade = conteudoElemento.lower()
+            tipo_atividade = unicodedata.normalize("NFKD", tipo_atividade)
+            tipo_atividade = "".join(
+                ch for ch in tipo_atividade if not unicodedata.combining(ch)
+            )
+            tipo_atividade = re.sub(r"[^a-z0-9_]", "_", tipo_atividade.replace("-", ""))
+            continue
+
+        cnae = conteudoElemento
+        atividadesEconomicas[tipo_atividade].append(cnae)
+
+    return atividadesEconomicas
 
 
 def parse_results_html(html_content: str) -> dict:
@@ -23,7 +51,13 @@ def parse_results_html(html_content: str) -> dict:
         )
 
         if titulo_tag.attrs.get("class") == ["box_title"]:
-            valor_tag = item.find_all("span", class_="label_title")[:-1]
+            atividades_economicas = parse_atividade_economica(item)
+            key = titulo_tag.get_text(strip=True).lower()
+            key = unicodedata.normalize("NFKD", key)
+            key = "".join(ch for ch in key if not unicodedata.combining(ch))
+            key = re.sub(r"[^a-z0-9_]", "_", key.replace("-", ""))
+            results[key] = atividades_economicas
+            continue
         else:
             valor_tag = item.find("span", class_="label_text")
 
