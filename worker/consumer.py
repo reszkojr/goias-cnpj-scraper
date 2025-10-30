@@ -28,7 +28,7 @@ def get_redis_connection():
                 f"Falha ao conectar ao Redis, tentando novamente em {retry_interval} segundos..."
             )
             time.sleep(retry_interval)
-        raise Exception("Não foi possível se conectar ao Redis.")
+    raise Exception("Não foi possível se conectar ao Redis.")
 
 
 def get_rabbitmq_connection():
