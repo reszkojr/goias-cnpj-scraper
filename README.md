@@ -157,7 +157,6 @@ curl "http://localhost:8000/results/550e8400-e29b-41d4-a716-446655440000"
 
 ```
 goias-cnpj-scraper/
-goias-cnpj-scraper/
 ├── app
 │   ├── Dockerfile              - Instruções para construir a imagem da API (ambiente de runtime)
 │   ├── main.py                 - API FastAPI: endpoints, roteamento e inicialização do servidor
