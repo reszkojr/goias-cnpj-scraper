@@ -124,7 +124,7 @@ async def create_scrape_task(
         )
     except Exception as e:
         print(f"FastAPI - Erro ao criar a tarefa de scraping: {e}")
-        return HTTPException(
+        raise HTTPException(
             status_code=500, detail=f"Erro ao criar a tarefa de scraping, {e}"
         )
 
