@@ -81,12 +81,12 @@ cd goias-cnpj-scraper
 
 2. **Inicie os serviços com Docker Compose**
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 > Para melhor performance, é possível escalar o número de workers:
 ```bash
-docker-compose up --build --scale worker=3
+docker compose up --build --scale worker=3
 ```
 
 3. **Verificar se os serviços estão funcionando**
@@ -233,7 +233,7 @@ pytest -v tests/
 ### Logs da Aplicação
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 ## Escalabilidade
@@ -244,10 +244,10 @@ O sistema foi projetado para ser escalável. Você pode executar múltiplos work
 
 ```bash
 # Executar com 3 workers
-docker-compose up --scale worker=3
+docker compose up --scale worker=3
 
 # Executar com 5 workers  
-docker-compose up --scale worker=5
+docker compose up --scale worker=5
 ```
 
 Cada worker processará tarefas independentemente da fila RabbitMQ, permitindo maior throughput de processamento de CNPJs.
