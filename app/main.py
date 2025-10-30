@@ -4,6 +4,7 @@ import time
 import uuid
 
 import aio_pika
+import redis
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.concurrency import asynccontextmanager
 from redis import asyncio as aioredis
@@ -147,6 +148,6 @@ async def get_task_result(request: Request, task_id: str):
 
         task_data = json.loads(task_data_json)
         return task_data
-    except Exception as e:
+    except redis.exceptions.RedisError as e:
         print(f"FastAPI - Erro no /results/{task_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Erro ao consultar a tarefa {e}")
