@@ -8,10 +8,10 @@ API REST para consultas assíncronas de CNPJ do estado de Goiás via Sintegra, c
 
 ### Componentes Principais
 
-**API FastAPI** (`app/main.py`): Interface REST responsável por receber requisições de consulta e fornecer resultados
-**Worker de Scraping** (`worker/consumer.py && worker/scraper.py`): Serviço dedicado que executa o web scraping do portal Sintegra
-**RabbitMQ**: Sistema de filas para processamento assíncrono das tarefas de scraping
-**Redis**: Cache para armazenamento temporário dos resultados e controle de estado das tarefas
+- **API FastAPI** (`app/main.py`): Interface REST responsável por receber requisições de consulta e fornecer resultados
+- **Worker de Scraping** (`worker/consumer.py && worker/scraper.py`): Serviço dedicado que executa o web scraping do portal Sintegra
+- **RabbitMQ**: Sistema de filas para processamento assíncrono das tarefas de scraping
+- **Redis**: Cache para armazenamento temporário dos resultados e controle de estado das tarefas
 
 ### Fluxo de Processamento
 
